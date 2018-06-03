@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import { render } from 'react-dom';
 
 import {
@@ -18,42 +18,32 @@ import TransitionProvider from '../../src';
 // ------------------------------
 
 const paragraphs = [
-  {
-    key: 'first',
-    para:
-      'Cupcake ipsum dolor sit. Amet soufflé carrot cake tootsie roll jelly-o chocolate cake.',
-  },
-  {
-    key: 'second',
-    para:
-      'Chocolate bar gummies sweet roll macaroon powder sweet tart croissant. Pastry ice cream bear claw cupcake topping caramels jelly beans chocolate cheesecake. Candy canes pastry cake tart powder.',
-  },
-  {
-    key: 'third',
-    para:
-      'Tootsie roll bear claw sesame snaps candy cheesecake caramels cookie. Lemon drops donut marzipan gummi bears cotton candy cotton candy jelly-o carrot cake. Lemon drops pastry apple pie biscuit tart tootsie roll.',
-  },
-  {
-    key: 'fourth',
-    para:
-      'Brownie icing chupa chups cake cookie halvah gummi bears halvah. Sesame snaps donut gingerbread marshmallow topping powder. Biscuit chocolate cheesecake pudding candy canes tart halvah sweet. Sugar plum cake candy carrot cake.',
-  },
-  {
-    key: 'fifth',
-    para:
-      'Ice cream marzipan liquorice candy canes sesame snaps danish soufflé lollipop candy canes. Lemon drops cotton candy pudding.',
-  },
-  {
-    key: 'sixth',
-    para:
-      'Pie cake soufflé cupcake jujubes sugar plum. Liquorice lollipop oat cake.',
-  },
+  'Cupcake ipsum dolor sit. Amet soufflé carrot cake tootsie roll jelly-o chocolate cake.',
+  'Chocolate bar gummies sweet roll macaroon powder sweet tart croissant. Pastry ice cream bear claw cupcake topping caramels jelly beans chocolate cheesecake. Candy canes pastry cake tart powder.',
+  'Tootsie roll bear claw sesame snaps candy cheesecake caramels cookie. Lemon drops donut marzipan gummi bears cotton candy cotton candy jelly-o carrot cake. Lemon drops pastry apple pie biscuit tart tootsie roll.',
+  'Brownie icing chupa chups cake cookie halvah gummi bears halvah. Sesame snaps donut gingerbread marshmallow topping powder. Biscuit chocolate cheesecake pudding candy canes tart halvah sweet. Sugar plum cake candy carrot cake.',
+  'Ice cream marzipan liquorice candy canes sesame snaps danish soufflé lollipop candy canes. Lemon drops cotton candy pudding.',
+  'Pie cake soufflé cupcake jujubes sugar plum. Liquorice lollipop oat cake.',
 ];
 
-function getRandom() {
-  const index = Math.floor(Math.random() * paragraphs.length);
-  return paragraphs[index];
-}
+const BigNumber = props => (
+  <div
+    style={{ fontSize: 36, fontWeight: 'bold', marginBottom: '0.5em' }}
+    {...props}
+  />
+);
+const Views = props => (
+  <div
+    style={{
+      borderBottom: '3px double #eee',
+      borderTop: '3px double #eee',
+      marginBottom: '1em',
+      paddingBottom: '1em',
+      paddingTop: '1em',
+    }}
+    {...props}
+  />
+);
 
 // example
 // ------------------------------
@@ -67,10 +57,6 @@ class App extends Component {
   prev = () => {
     if (this.state.currentIndex === 0) return;
     this.setState(state => ({ currentIndex: state.currentIndex - 1 }));
-  };
-  update = () => {
-    const paragraph = getRandom();
-    this.setState({ paragraph });
   };
   render() {
     const { currentIndex } = this.state;
@@ -100,16 +86,17 @@ class App extends Component {
               next
             </button>
           </p>
-          <div style={{ paddingBottom: '1em', position: 'relative' }}>
+
+          <Views>
             <TransitionProvider index={currentIndex}>
               {paragraphs.map((p, i) => (
-                <div key={p.key}>
-                  <h1>{i}</h1>
-                  <p>{p.para}</p>
-                </div>
+                <Fragment key={i}>
+                  <BigNumber>{i + 1}</BigNumber>
+                  <p>{p}</p>
+                </Fragment>
               ))}
             </TransitionProvider>
-          </div>
+          </Views>
 
           <Footer>
             <span> by </span>

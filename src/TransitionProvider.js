@@ -4,138 +4,96 @@ import React, { cloneElement, Children, Component, type Element } from 'react';
 import NodeResolver from 'react-node-resolver';
 import { Transition, TransitionGroup } from 'react-transition-group';
 
-type Height = number | string;
 type Props = {
-  alpha: boolean,
   children: Element<*>,
-  initial: Height,
   index: number,
   onChange?: Height => any,
-  tag: string,
 };
-type State = { height: Height };
+type State = {
+  isNext: boolean,
+  height: number,
+};
 
-function getStyle(element, key, parse) {
-  const style = element.currentStyle || window.getComputedStyle(element);
-  return key ? (parse ? parseInt(style[key]) : style[key]) : style;
-}
-function uniqueId() {
-  return Math.random()
-    .toString(36)
-    .substr(2, 9);
-}
+const View = ({ children, innerRef, exitPosition, ...props }) => {
+  const base = {
+    boxSizing: 'border-box',
+    position: 'absolute',
+    width: '100%',
+    transition: 'transform 220ms cubic-bezier(0.2, 0, 0, 1)',
+  };
+  const states = {
+    entering: { transform: `translateX(0)` },
+    entered: { transform: `translateX(0)` },
+    exiting: { transform: `translateX(${exitPosition})` },
+    exited: { transform: `translateX(${exitPosition})` },
+  };
+  return (
+    <Transition mountOnEnter unmountOnExit timeout={220} {...props}>
+      {state => {
+        const style = { ...base, ...states[state] };
+
+        return (
+          <div style={style} ref={innerRef}>
+            {children}
+          </div>
+        );
+      }}
+    </Transition>
+  );
+};
 
 export default class TransitionProvider extends Component<Props, State> {
-  transitionId = uniqueId();
-  direction: 'next' | 'prev';
-  behaviour: 'entering' | 'leaving';
-  state = { height: this.props.initial };
-  static defaultProps = { alpha: true, initial: 0, tag: 'div' };
+  state = { height: 0, isNext: false };
 
-  getSnapshotBeforeUpdate(prevProps: Props) {
-    if (this.props.index > prevProps.index) {
-      return { direction: 'next' };
-    }
-    if (this.props.index < prevProps.index) {
-      return { direction: 'prev' };
-    }
-    return null;
+  // TODO find a way around this
+  UNSAFE_componentWillReceiveProps(nextProps: Props) {
+    const isNext = nextProps.index > this.props.index;
+    this.setState({ isNext });
   }
 
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    if (snapshot !== null) {
-      this.direction = snapshot.direction;
-    }
-  }
-
-  onEnter = (idx, key) => () => {
-    // this.behaviour = idx === this.props.index ? 'entering' : 'leaving';
-    this.enterIndex = idx;
-  };
-  onExited = (idx, key) => () => {
-    this.exitIndex = idx;
-  };
-  getHeight = ref => {
+  getHeight = (ref: HTMLElement) => {
     if (!ref) return;
-    this.setState({ height: ref.scrollHeight });
+    const height = ref.scrollHeight;
+    this.setState({ height });
   };
-  group = props => {
+  group = (props: Props) => {
     const transition = 'height 220ms cubic-bezier(0.2, 0, 0, 1)';
-    const { height } = this.state;
-    return <div style={{ height, transition }} {...props} />;
-  };
-  render() {
-    const { children, index } = this.props;
     const { height } = this.state;
 
     return (
-      <TransitionGroup component={this.group}>
-        {children
-          ? Children.map(children, (child, idx) => {
-              return idx === index ? (
-                <Transition
-                  mountOnEnter
-                  unmountOnExit
-                  timeout={220}
-                  onEnter={this.onEnter(idx, child.key)}
-                  onExited={this.onExited(idx, child.key)}
-                >
-                  {state => {
-                    const base = {
-                      boxSizing: 'border-box',
-                      position: 'absolute',
-                      width: '100%',
-                      transition: 'transform 220ms cubic-bezier(0.2, 0, 0, 1)',
-                    };
+      <div
+        style={{
+          height,
+          maxWidth: '100%',
+          overflow: 'hidden',
+          position: 'relative',
+          transition,
+        }}
+        {...props}
+      />
+    );
+  };
+  childFactory = (child: Element<*>) => {
+    const { index } = this.props;
+    const { isNext } = this.state;
+    const isLeaving = child.props.index !== index;
+    const exitPosition =
+      (isNext && isLeaving) || (!isNext && !isLeaving) ? '-100%' : '100%';
 
-                    console.log('direction', this.direction);
-                    console.log('behaviour', this.enterIndex === idx);
-                    let states;
-                    if (this.enterIndex === idx) {
-                      console.log('behaviour is ENTERING', child.key);
-                      states =
-                        this.direction === 'next'
-                          ? {
-                              entering: { transform: 'translateX(0)' },
-                              entered: { transform: 'translateX(0)' },
-                              exiting: { transform: 'translateX(-100%)' },
-                              exited: { transform: 'translateX(-100%)' },
-                            }
-                          : {
-                              entering: { transform: 'translateX(0)' },
-                              entered: { transform: 'translateX(0)' },
-                              exiting: { transform: 'translateX(100%)' },
-                              exited: { transform: 'translateX(100%)' },
-                            };
-                    } else {
-                      states =
-                        this.direction === 'next'
-                          ? {
-                              entering: { transform: 'translateX(0)' },
-                              entered: { transform: 'translateX(0)' },
-                              exiting: { transform: 'translateX(-100%)' },
-                              exited: { transform: 'translateX(-100%)' },
-                            }
-                          : {
-                              entering: { transform: 'translateX(0)' },
-                              entered: { transform: 'translateX(0)' },
-                              exiting: { transform: 'translateX(100%)' },
-                              exited: { transform: 'translateX(100%)' },
-                            };
-                    }
-                    // console.log('states', states);
-                    const style = { ...base, ...states[state] };
+    return cloneElement(child, { exitPosition });
+  };
+  render() {
+    const { children, height, index } = this.props;
+    const child = Children.toArray(children)[index];
 
-                    return (
-                      <div style={style} ref={this.getHeight}>
-                        {child}
-                      </div>
-                    );
-                  }}
-                </Transition>
-              ) : null;
-            })
-          : null}
+    return (
+      <TransitionGroup component={this.group} childFactory={this.childFactory}>
+        <View
+          index={index}
+          children={child}
+          innerRef={this.getHeight}
+          key={index}
+        />
       </TransitionGroup>
     );
   }
