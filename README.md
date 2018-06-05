@@ -21,6 +21,8 @@ Slider.defaultProps = {
 };
 ```
 
-### Note
+## Alternatives
 
-This is intentionally a very simple component. For a more fully featured "carousel" style solution please see https://github.com/souporserious/react-view-pager.
+This component is intentionally simple. For more a sophisticated alternative checkout:
+
+- https://github.com/souporserious/react-view-pager
